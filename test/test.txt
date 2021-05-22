@@ -1,0 +1,326 @@
+	.macro func _name, _align=2
+	/*
+	 * Add Call Frame Information entry in the .debug_frame section for
+	 * debugger consumption. This enables callstack printing in debuggers.
+	 * This does not use any space in the final loaded binary, only in the
+	 * ELF file.
+	 * Note that a function manipulating the CFA pointer location (i.e. the
+	 * x29 frame pointer on AArch64) should declare it using the
+	 * appropriate .cfi* directives, or be prepared to have a degraded
+	 * debugging experience.
+	 */
+	.cfi_sections .debug_frame
+	.section .text.asm.\_name, "ax"
+	.type \_name, %function
+	/*
+	 * .cfi_startproc and .cfi_endproc are needed to output entries in
+	 * .debug_frame
+	 */
+	.cfi_startproc
+	.align \_align
+	\_name:
+	.endm
+
+	/*
+	 * This macro is used to mark the end of a function.
+	 */
+	.macro endfunc _name
+	.cfi_endproc
+	.size \_name, . - \_name
+	.endm
+
+
+
+#define SYMBOL_NAME(X)		X
+#define ASM_NL		 ;
+
+#define __ALIGN .align 0
+
+#define ALIGN			__ALIGN
+
+#define SYMBOL_NAME_LABEL(X)	X##:
+
+#define LENTRY(name) \
+	ALIGN ASM_NL \
+	SYMBOL_NAME_LABEL(name)
+
+#define ENTRY(name) \
+	.globl SYMBOL_NAME(name) ASM_NL \
+	LENTRY(name)
+	
+	
+	
+func bl2_entrypoint
+
+endfunc bl2_entrypoint
+
+.globl	bl2_entrypoint
+.cfi_sections .debug_frame
+.section .text.asm.bl2_entrypoint, "ax"
+.type bl2_entrypoint, %function
+.cfi_startproc
+.align 2
+bl2_entrypoint:
+.cfi_endproc
+.size bl2_entrypoint, . - bl2_entrypoint
+
+
+.globl _main ; 
+.align 0 ; 
+_main:
+
+.type _main 2 ; 
+.size _main, .-_main
+
+
+
+arm-linux-gnueabi-gcc -Iinclude -Iinclude/arch/aarch32 -Iinclude/lib/cpus/aarch32 -Iinclude/lib/el3_runtime/aarch32 -Iplat/st/common/include/ 
+-Iplat/st/stm32mp1/include/  -Iinclude/lib/libfdt -Iinclude/bl32/sp_min -Iinclude/lib/libc -Iinclude/lib/libc/aarch32   
+-nostdinc -Werror -Wall -Wmissing-include-dirs -Wunused -Wdisabled-optimization    
+-Wvla -Wshadow -Wno-unused-parameter -Wredundant-decls -Wunused-but-set-variable 
+-Wmaybe-uninitialized -Wpacked-bitfield-compat -Wshift-overflow=2 -Wlogical-op 
+-Wno-error=deprecated-declarations -Wno-error=cpp -mcpu=cortex-a7 -mfpu=neon -ffreestanding -Wa,--fatal-warnings 
+-D__ASSEMBLY__ -DIMAGE_BL2  
+-Wp,-MD,/root/work/arm-trusted-firmware/build/stm32mp1/release/bl2/bl2_el3_entrypoint.d 
+-MT /root/work/arm-trusted-firmware/build/stm32mp1/release/bl2/bl2_el3_entrypoint.o -MP 
+-c bl2/aarch32/bl2_el3_entrypoint.S -o /root/work/arm-trusted-firmware/build/stm32mp1/release/bl2/bl2_el3_entrypoint.o
+
+arm-linux-gnueabi-gcc -Iinclude -nostdinc -Werror -Wall -Wmissing-include-dirs -Wunused -Wdisabled-optimization -Wvla -Wshadow -Wno-unused-parameter -Wredundant-decls -Wunused-but-set-variable -Wmaybe-uninitialized -Wpacked-bitfield-compat -Wshift-overflow=2 -Wlogical-op -Wno-error=deprecated-declarations -Wno-error=cpp -mcpu=cortex-a7 -mfpu=neon -ffreestanding -Wa,--fatal-warnings -D__ASSEMBLY__ -DIMAGE_BL2 -Wp,-MD,/root/work/exynos-bl2/bl2/bl2_entrypoint.d -MT /root/work/exynos-bl2/bl2/entrypoint.o -MP -c bl2/bl2_entrypoint.S -o /root/work/exynos-bl2/bl2/bl2_entrypoint.o
+
+arm-linux-gnueabi-gcc -Iinclude -nostdinc -Werror -Wall -Wmissing-include-dirs -Wunused -Wdisabled-optimization -Wvla -Wshadow -Wno-unused-parameter -Wredundant-decls -Wunused-but-set-variable -Wmaybe-uninitialized -Wpacked-bitfield-compat -Wshift-overflow=2 -Wlogical-op -Wno-error=deprecated-declarations -Wno-error=cpp -mcpu=cortex-a7 -ffreestanding -Wa,--fatal-warnings -D__ASSEMBLY__ -DIMAGE_BL2 -Wp,-MD,/root/work/exynos-bl2/bl2/bl2_entrypoint.d -MT /root/work/exynos-bl2/bl2/entrypoint.o -MP -c bl2/bl2_entrypoint.S -o /root/work/exynos-bl2/bl2/bl2_entrypoint.o
+
+
+arm-linux-gnueabi-gcc -Iinclude -nostdinc -Werror -Wall -Wmissing-include-dirs -Wunused -Wdisabled-optimization -Wvla -Wshadow -Wno-unused-parameter -Wredundant-decls -Wunused-but-set-variable -Wmaybe-uninitialized -Wpacked-bitfield-compat -Wshift-overflow=2 -Wlogical-op -Wno-error=deprecated-declarations -Wno-error=cpp -mcpu=cortex-a9 -ffreestanding -Wa,--fatal-warnings -D__ASSEMBLY__ -DIMAGE_BL2 -Wp,-MD,/root/work/exynos-bl2/bl2/bl2_entrypoint.d -MT /root/work/exynos-bl2/bl2/entrypoint.o -MP -c bl2/bl2_entrypoint.S -o /root/work/exynos-bl2/bl2/bl2_entrypoint.o
+
+
+arm-poky-linux-gnueabi-gcc -Wp,-MMD,bl2/.bl2_entrypoint.o.d  -nostdinc -isystem /opt/poky/3.0.4/sysroots/x86_64-pokysdk-linux/usr/lib/arm-poky-linux-gnueabi/gcc/arm-poky-linux-gnueabi/9.2.0/include -mcpu=cortex-a9 -Iinclude  -include ./include/linux/kconfig.h -D__KERNEL__ -D__ASSEMBLY__ -fno-PIE -g    -c -o bl2/bl2_entrypoint.o bl2/bl2_entrypoint.S
+
+arm-poky-linux-gnueabi-gcc -Wp,-MMD,bl2/.bl2_entrypoint.o.d  -nostdinc -isystem /opt/poky/3.0.4/sysroots/x86_64-pokysdk-linux/usr/lib/arm-poky-linux-gnueabi/gcc/arm-poky-linux-gnueabi/9.2.0/include -Iinclude  -include ./include/linux/kconfig.h -D__KERNEL__ -D__ASSEMBLY__ -fno-PIE -g    -c -o bl2/bl2_entrypoint.o bl2/bl2_entrypoint.S
+
+arm-poky-linux-gnueabi-gcc -Wp,-MMD,bl2/.bl2_entrypoint.o.d  -nostdinc -isystem /opt/poky/3.0.4/sysroots/x86_64-pokysdk-linux/usr/lib/arm-poky-linux-gnueabi/gcc/arm-poky-linux-gnueabi/9.2.0/include -Iinclude  -include ./include/linux/kconfig.h -D__KERNEL__ -D__ASSEMBLY__ -fno-PIE -g    -c -o bl2/bl2_entrypoint.o bl2/bl2_entrypoint.S
+
+
+
+asflags-y  += $(PLATFORM_CPPFLAGS)
+ccflags-y  += $(PLATFORM_CPPFLAGS)
+cppflags-y += $(PLATFORM_CPPFLAGS)
+
+
+
+
+$(warning $(subdir-builtin))
+$(foreach m, $(obj-y), $(if $(strip $($(m:.o=-objs)) $($(m:.o=-y)) $($(m:.o=-))),$($(m:.o=-objs)) $($(m:.o=-y)),$(m)))
+
+
+
+gcc --machine=arm -march=armv7-a+fp -mfpu=vfp -mfloat-abi=hard test.c -o test
+gcc --machine=arm -march=armv7-a+fp -mfpu=vfp -mfloat-abi=soft test.c -o test
+
+PLATFORM_RELFLAGS += $(call cc-option, -msoft-float) \
+
+PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections \
+		     -fno-common -ffixed-r9
+
+CPPFLAGS		=	${DEFINES} ${INCLUDES} ${MBEDTLS_INC} -nostdinc	\
+				$(ERRORS) $(WARNINGS)
+ASFLAGS			+=	$(CPPFLAGS) $(ASFLAGS_$(ARCH))			\
+				-ffreestanding -Wa,--fatal-warnings
+TF_CFLAGS		+=	$(CPPFLAGS) $(TF_CFLAGS_$(ARCH))		\
+				-ffunction-sections -fdata-sections		\
+				-ffreestanding -fno-builtin -fno-common		\
+				-Os -std=gnu99
+
+
+
+OUTPUT_FORMAT("elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(bl2_entrypoint)
+MEMORY {
+    RAM (rwx): ORIGIN = (((0x2FFC0000) + ((0x00040000) - ((1) << (12))) - (0x00011000)) - (0x00017000)), LENGTH = ((((0x2FFC0000) + ((0x00040000) - ((1) << (12))) - (0x00011000)) - (0x00017000)) + (0x00017000)) - (((0x2FFC0000) + ((0x00040000) - ((1) << (12))) - (0x00011000)) - (0x00017000))
+}
+SECTIONS
+{
+	. = (((0x2FFC0000) + ((0x00040000) - ((1) << (12))) - (0x00011000)) - (0x00017000));
+	ASSERT(. == ALIGN(((1) << (12))), "BL2_BASE address is not aligned on a page boundary.")
+
+	ro . : 
+	{
+		__RO_START__ = .;
+		__TEXT_RESIDENT_START__ = .;
+		*bl2_el3_entrypoint.o(.text*)
+		*(.text.asm.*)
+		__TEXT_RESIDENT_END__ = .;
+		*(SORT_BY_ALIGNMENT(.text*))
+		*(SORT_BY_ALIGNMENT(.rodata*))
+		. = ALIGN(4); 
+		__RT_SVC_DESCS_START__ = .;
+		KEEP(*(rt_svc_descs)) 
+		__RT_SVC_DESCS_END__ = .; 
+		. = ALIGN(4); 
+		__FCONF_POPULATOR_START__ = .; 
+		KEEP(*(.fconf_populator)) 
+		__FCONF_POPULATOR_END__ = .; 
+		. = ALIGN(4); 
+		__PMF_SVC_DESCS_START__ = .; 
+		KEEP(*(pmf_svc_descs)) 
+		__PMF_SVC_DESCS_END__ = .; 
+		. = ALIGN(4); 
+		__PARSER_LIB_DESCS_START__ = .; 
+		KEEP(*(.img_parser_lib_descs)) 
+		__PARSER_LIB_DESCS_END__ = .; 
+		. = ALIGN(4); 
+		__CPU_OPS_START__ = .; 
+		KEEP(*(cpu_ops)) 
+		__CPU_OPS_END__ = .; 
+		. = ALIGN(4); 
+		__GOT_START__ = .; 
+		*(.got) __GOT_END__ = .;
+        *(.vectors)
+        __RO_END_UNALIGNED__ = .;
+        . = ALIGN(((1) << (12)));
+        __RO_END__ = .;
+    } >RAM
+	ASSERT(__CPU_OPS_END__ > __CPU_OPS_START__, "cpu_ops not defined for this platform.")
+	__RW_START__ = . ;
+	.data . : ALIGN(1) 
+	{
+		__DATA_START__ = .; 
+		*(SORT_BY_ALIGNMENT(.data*)) 
+		__DATA_END__ = .; 
+	} >RAM 
+	AT>RAM
+	__DATA_RAM_START__ = __DATA_START__;
+	__DATA_RAM_END__ = __DATA_END__;
+	.rela.dyn : ALIGN(4) 
+	{
+		__RELA_START__ = .; 
+		*(.rela*) __RELA_END__ = .;
+	} >RAM
+    stacks (NOLOAD) : 
+	{
+		__STACKS_START__ = .; 
+		*(tzfw_normal_stacks) 
+		__STACKS_END__ = .; 
+	} >RAM
+    .bss (NOLOAD) : ALIGN(8)
+	{
+		__BSS_START__ = .;
+		*(SORT_BY_ALIGNMENT(.bss*)) *(COMMON) 
+		. = ALIGN(((1) << 6)); 
+		__BAKERY_LOCK_START__ = .; 
+		__PERCPU_BAKERY_LOCK_START__ = .; 
+		*(bakery_lock) 
+		. = ALIGN(((1) << 6)); 
+		__PERCPU_BAKERY_LOCK_END__ = .; 
+		__PERCPU_BAKERY_LOCK_SIZE__ = ABSOLUTE(__PERCPU_BAKERY_LOCK_END__ - __PERCPU_BAKERY_LOCK_START__); 
+		. = . + (__PERCPU_BAKERY_LOCK_SIZE__ * (((0) + (2)) - 1)); 
+		__BAKERY_LOCK_END__ = .; 
+		. = ALIGN(((1) << 6)); 
+		__PMF_TIMESTAMP_START__ = .; 
+		KEEP(*(pmf_timestamp_array)) 
+		. = ALIGN(((1) << 6)); 
+		__PMF_PERCPU_TIMESTAMP_END__ = .; 
+		__PERCPU_TIMESTAMP_SIZE__ = ABSOLUTE(. - __PMF_TIMESTAMP_START__); 
+		. = . + (__PERCPU_TIMESTAMP_SIZE__ * (((0) + (2)) - 1)); 
+		__PMF_TIMESTAMP_END__ = .; 
+		. = ALIGN(16); 
+		*(base_xlat_table) __BSS_END__ = .; 
+	} >RAM
+    xlat_table (NOLOAD) : 
+	{ 
+		*(xlat_table) } >RAM
+		__RW_END__ = .;
+		__BL2_END__ = .;
+    /DISCARD/ : 
+	{
+		*(.dynsym .dynstr .hash .gnu.hash)
+    }
+    __BSS_SIZE__ = SIZEOF(.bss);
+    ASSERT(. <= ((((0x2FFC0000) + ((0x00040000) - ((1) << (12))) - (0x00011000)) - (0x00017000)) + (0x00017000)), "BL2 image has exceeded its limit.")
+}
+
+
+
+
+
+
+MEMORY { .sram : ORIGIN = IMAGE_TEXT_BASE, \
+		LENGTH = CONFIG_SPL_MAX_FOOTPRINT }
+
+OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(_start)
+
+SECTIONS
+{
+	.text :
+	{
+		__start = .;
+		*(.vectors)
+		arch/arm/cpu/armv7/start.o (.text*)
+		*(.text*)
+	} >.sram
+	. = ALIGN(4);
+
+	.rodata : { *(SORT_BY_ALIGNMENT(.rodata*)) } >.sram
+	. = ALIGN(4);
+
+	.data : { *(SORT_BY_ALIGNMENT(.data*)) } >.sram
+	. = ALIGN(4);
+
+	.u_boot_list : {
+		KEEP(*(SORT(.u_boot_list*)));
+	} >.sram
+	. = ALIGN(4);
+
+	.machine_param : { *(.machine_param) } >.sram
+	. = ALIGN(4);
+
+	__image_copy_end = .;
+
+	.end :
+	{
+		*(.__end)
+	} >.sram
+
+	.bss :
+	{
+		. = ALIGN(4);
+		__bss_start = .;
+		*(.bss*)
+		. = ALIGN(4);
+		__bss_end = .;
+	} >.sram
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

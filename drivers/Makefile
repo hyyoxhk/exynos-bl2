@@ -1,0 +1,1 @@
+obj-y += s5p_uart.o
