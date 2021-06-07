@@ -30,9 +30,11 @@
 *.su
 *.swp
 *.tab.[ch]
+bl2.map
 
 # Build tree
 /build-*
+exynos-bl2
 
 #
 # Top-level generic files
