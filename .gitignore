@@ -50,6 +50,7 @@ fit-dtb.blob*
 #
 !.gitignore
 !.mailmap
+!firmware/*
 
 #
 # Generated files
@@ -63,7 +64,7 @@ fit-dtb.blob*
 #
 /include/config/
 /include/generated/
-
+tools/checksum
 # stgit generated dirs
 patches-*
 .stgit-edit.txt
