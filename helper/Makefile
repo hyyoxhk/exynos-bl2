@@ -1,0 +1,10 @@
+obj-y += led.o
+obj-y += exynos-smc.o
+obj-y += cache.o
+obj-y += misc.o
+obj-y += stack.o
+obj-y += power.o
+obj-y += clock.o
+obj-y += dmc_init.o
+obj-y += tf_log.o
+obj-y += sdelay.o
