@@ -446,7 +446,7 @@ else
 # Carefully list dependencies so we do not try to build scripts twice
 # in parallel
 PHONY += scripts
-scripts: scripts_basic tools_basic include/config/auto.conf
+scripts: scripts_basic tools_basic
 	$(Q)$(MAKE) $(build)=$(@)
 endif
 
