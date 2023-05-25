@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: GPL-2.0
 #
-# Copyright (C) 2020-2023 hey <hyyoxhk@163.com>
+# Copyright (C) 2020-2023 He Yong <hyyoxhk@163.com>
 #
+
+MAJOR_VERSION = 1
+MINOR_VERSION = 0
 
 ifeq ("$(origin V)", "command line")
   KBUILD_VERBOSE = $(V)
@@ -129,9 +132,7 @@ objtree		:= .
 src		:= $(srctree)
 obj		:= $(objtree)
 
-VPATH		:= $(srctree)$(if $(KBUILD_EXTMOD),:$(KBUILD_EXTMOD))
-
-export srctree objtree VPATH
+export srctree objtree
 
 # Make sure CDPATH settings don't interfere
 unexport CDPATH
@@ -151,7 +152,7 @@ HOSTARCH := $(shell uname -m | \
 HOSTOS := $(shell uname -s | tr '[:upper:]' '[:lower:]' | \
 	    sed -e 's/\(cygwin\).*/cygwin/')
 
-export	HOSTARCH HOSTOS
+export HOSTARCH HOSTOS
 
 #########################################################################
 
@@ -341,7 +342,9 @@ endif
 # Don't generate position independent code
 KBUILD_CFLAGS	+= $(call cc-option,-fno-PIE)
 KBUILD_AFLAGS	+= $(call cc-option,-fno-PIE)
+BL2VERSION = $(MAJOR_VERSION).$(MINOR_VERSION)
 
+export BL2VERSION
 export CONFIG_SHELL HOSTCC KBUILD_HOSTCFLAGS CROSS_COMPILE AS LD CC
 export CPP AR NM LDR STRIP OBJCOPY OBJDUMP KBUILD_HOSTLDFLAGS KBUILD_HOSTLDLIBS
 export MAKE LEX YACC AWK PERL PYTHON PYTHON2 PYTHON3
@@ -392,18 +395,27 @@ ifneq ($(KBUILD_SRC),)
 	    $(srctree) $(objtree)
 endif
 
-# FIX: wait for it by hyyoxhk
+version_h := include/version.h
+
+no-dot-config-targets := clean clobber mrproper distclean \
+			 help %docs check% coccicheck \
+			 ubootversion backup tests check qcheck tcheck
+
 config-targets := 0
 mixed-targets  := 0
 dot-config     := 1
 
-ifeq ($(KBUILD_EXTMOD),)
-        ifneq ($(filter config %config,$(MAKECMDGOALS)),)
-                config-targets := 1
-                ifneq ($(words $(MAKECMDGOALS)),1)
-                        mixed-targets := 1
-                endif
-        endif
+ifneq ($(filter $(no-dot-config-targets), $(MAKECMDGOALS)),)
+	ifeq ($(filter-out $(no-dot-config-targets), $(MAKECMDGOALS)),)
+		dot-config := 0
+	endif
+endif
+
+ifneq ($(filter config %config,$(MAKECMDGOALS)),)
+	config-targets := 1
+	ifneq ($(words $(MAKECMDGOALS)),1)
+		mixed-targets := 1
+	endif
 endif
 
 ifeq ($(mixed-targets),1)
@@ -428,7 +440,7 @@ ifeq ($(config-targets),1)
 # *config targets only - make sure prerequisites are updated, and descend
 # in scripts/kconfig to make the *config target
 
-KBUILD_DEFCONFIG := sandbox_defconfig
+KBUILD_DEFCONFIG := itop_defconfig
 export KBUILD_DEFCONFIG KBUILD_KCONFIG
 
 config: scripts_basic outputmakefile FORCE
@@ -446,9 +458,41 @@ else
 # Carefully list dependencies so we do not try to build scripts twice
 # in parallel
 PHONY += scripts
-scripts: scripts_basic tools_basic
+scripts: scripts_basic tools_basic include/config/auto.conf
 	$(Q)$(MAKE) $(build)=$(@)
-endif
+
+ifeq ($(dot-config),1)
+# Read in config
+-include include/config/auto.conf
+
+# Read in dependencies to all Kconfig* files, make sure to run
+# oldconfig if changes are detected.
+-include include/config/auto.conf.cmd
+
+# To avoid any implicit rule to kick in, define an empty command
+$(KCONFIG_CONFIG) include/config/auto.conf.cmd: ;
+
+# If .config is newer than include/config/auto.conf, someone tinkered
+# with it and forgot to run make oldconfig.
+# if auto.conf.cmd is missing then we are probably in a cleaned tree so
+# we execute the config step to be sure to catch updated Kconfig files
+include/config/%.conf: $(KCONFIG_CONFIG) include/config/auto.conf.cmd
+	$(Q)$(MAKE) -f $(srctree)/Makefile syncconfig
+	@# If the following part fails, include/config/auto.conf should be
+	@# deleted so "make silentoldconfig" will be re-run on the next build.
+	@# include/config.h has been updated after "make silentoldconfig".
+	@# We need to touch include/config/auto.conf so it gets newer
+	@# than include/config.h.
+	@# Otherwise, 'make silentoldconfig' would be invoked twice.
+	$(Q)touch include/config/auto.conf
+
+-include include/autoconf.mk
+-include include/autoconf.mk.dep
+
+else
+# Dummy target needed, because used as prerequisite
+include/config/auto.conf: ;
+endif # $(dot-config)
 
 #
 # Xtensa linker script cannot be preprocessed with -ansi because of
@@ -462,6 +506,7 @@ ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
 else
 KBUILD_CFLAGS	+= -O2
+endif
 
 KBUILD_CFLAGS += $(call cc-option,-fno-stack-protector)
 KBUILD_CFLAGS += $(call cc-option,-fno-delete-null-pointer-checks)
@@ -583,10 +628,10 @@ cmd_objcopy = $(OBJCOPY) --gap-fill=0xff $(OBJCOPYFLAGS) \
 exynos-bl2.bin: exynos-bl2 FORCE
 	$(call if_changed,objcopy)
 
-exynos-bl2-checksum.bin: exynos-bl2.bin
+exynos-bl2.cs: exynos-bl2.bin
 	$(objtree)/tools/checksum $< $@
 
-exynos-bl2.img: exynos-bl2-checksum.bin
+exynos-bl2.img: exynos-bl2.cs
 	$(objtree)/tools/codesigner_v21 -v2.1 $< $@ $(objtree)/firmware/Exynos4412_V21.prv -STAGE2
 
 # The actual objects are generated when descending,
@@ -610,12 +655,12 @@ $(exynos-bl2-dirs): prepare scripts
 # version.h and scripts_basic is processed / created.
 
 # Listed in dependency order
-PHONY += prepare prepare0 prepare1 prepare2 prepare3
+PHONY += prepare prepare0 prepare1 prepare2 prepare3 prepare4
 
 # prepare3 is used to check if we are building in a separate output directory,
 # and if so do:
 # 1) Check that make has not been executed in the kernel src $(srctree)
-prepare3:
+prepare4:
 ifneq ($(KBUILD_SRC),)
 	@$(kecho) '  Using $(srctree) as source for exynos-bl2'
 	$(Q)if [ -f $(srctree)/.config -o -d $(srctree)/include/config ]; then \
@@ -625,16 +670,23 @@ ifneq ($(KBUILD_SRC),)
 	fi;
 endif
 
-# prepare2 creates a makefile if using a separate output directory
-prepare2: prepare3 outputmakefile
+prepare3: prepare4 outputmakefile
 
-prepare1: prepare2
+prepare2: prepare3 $(version_h) include/config/auto.conf
 
-prepare0: prepare1 scripts_basic FORCE
+prepare1: prepare2 scripts_basic
+
+prepare0: prepare1 FORCE
 	$(Q)$(MAKE) $(build)=.
 
 # All the preparing..
 prepare: prepare0
+
+# Generate some files
+# ---------------------------------------------------------------------------
+define filechk_version.h
+	(echo \#define BL2_VERSION \"$(BL2VERSION)\";)
+endef
 
 $(version_h): $(srctree)/Makefile FORCE
 	$(call filechk,version.h)
@@ -660,6 +712,15 @@ CLEAN_DIRS  += $(MODVERDIR) \
 			$(filter-out include, $(shell ls -1 $d 2>/dev/null))))
 
 CLEAN_FILES += exynos-bl2* bl2.map
+
+# Directories & files removed with 'make mrproper'
+MRPROPER_DIRS  += include/config include/generated spl tpl \
+		  .tmp_objdiff doc/output include/asm
+
+# Remove include/asm symlink created by U-Boot before v2014.01
+MRPROPER_FILES += .config .config.old include/autoconf.mk* include/config.h \
+		  ctags etags tags TAGS cscope* GPATH GTAGS GRTAGS GSYMS \
+		  drivers/video/fonts/*.S
 
 # clean - Delete most, but leave enough to build external modules
 #
@@ -697,8 +758,6 @@ mrproper: clean $(mrproper-dirs)
 	$(call cmd,rmdirs)
 	$(call cmd,rmfiles)
 
-endif #ifeq ($(config-targets),1)
-endif #ifeq ($(mixed-targets),1)
 # Single targets
 # ---------------------------------------------------------------------------
 # Single targets are compatible with:
@@ -742,7 +801,9 @@ quiet_cmd_rmdirs = $(if $(wildcard $(rm-dirs)),CLEAN   $(wildcard $(rm-dirs)))
 quiet_cmd_rmfiles = $(if $(wildcard $(rm-files)),CLEAN   $(wildcard $(rm-files)))
       cmd_rmfiles = rm -f $(rm-files)
 
-endif	# skip-makefile
+endif #ifeq ($(config-targets),1)
+endif #ifeq ($(mixed-targets),1)
+endif #ifeq ($(skip-makefile),)
 
 PHONY += FORCE
 FORCE:

@@ -1,8 +1,8 @@
 extra-y	:= bl2_entrypoint.o
 
 obj-y += bl2_main.o
-obj-y += bl2_image_load_v1.o
-obj-y += bl2_image_load_v2.o
+obj-$(CONFIG_NORMAL_BOOT)	+= bl2_image_load_v1.o
+obj-$(CONFIG_SECURE_BOOT)	+= bl2_image_load_v2.o
 
 #PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections \
 #		     -fno-common -ffixed-r9

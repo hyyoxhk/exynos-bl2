@@ -31,6 +31,8 @@ ldflags-y  :=
 subdir-asflags-y :=
 subdir-ccflags-y :=
 
+-include include/config/auto.conf
+
 include scripts/Kbuild.include
 
 # For backward compatibility check that these variables do not change

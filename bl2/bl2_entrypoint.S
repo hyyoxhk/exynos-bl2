@@ -11,7 +11,6 @@
 	.globl	bl2_entrypoint
 	.globl	report_exception
 
-
 vector_base bl2_vector_table
 	b	bl2_entrypoint
 	b	report_exception	/* Undef */

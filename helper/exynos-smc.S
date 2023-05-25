@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2010 Texas Instruments, Inc.
  * Copyright (C) 2012 Samsung Electronics.
- * Copyright (C) 2012 He Yong.
+ * Copyright (C) 2022 He Yong.
  *
  * Ported from Linux - arch/arm/mach-exynos/exynos-smc.S
  */
