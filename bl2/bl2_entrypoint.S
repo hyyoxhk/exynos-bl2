@@ -75,7 +75,9 @@ func bl2_entrypoint
 	 * primary cpu is running at the moment.
 	 * --------------------------------------------
 	 */
-	bl	plat_set_my_stack
+	ldr	r0, =(CONFIG_SP_ADDR)
+	bic	r0, r0, #7	/* 8-byte alignment for ABI compliance */
+	mov	sp, r0
 
 	/* ---------------------------------------------
 	 * Initialize the stack protector canary before
